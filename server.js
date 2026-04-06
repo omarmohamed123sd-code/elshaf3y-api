@@ -1,58 +1,29 @@
 const express = require("express");
-const mysql = require("mysql2");
-
 const app = express();
 
-// الاتصال بالداتا بيز
-const db = mysql.createConnection({
-  host: "sql200.infinityfree.com",
-  user: "if0_41584453",
-  password: "Omar13101993",
-  database: "if0_41584453_Elshaf3y"
+const users = [
+  { user: "omar", pass: "123", expire: "2026-12-31" }
+];
+
+app.get("/", (req, res) => {
+  res.send("Server Working ✅");
 });
 
-db.connect(err => {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("DB Connected");
-  }
+app.get("/login", (req, res) => {
+  const { user, pass } = req.query;
+
+  const u = users.find(x => x.user === user && x.pass === pass);
+
+  if (!u) return res.send("invalid");
+
+  const today = new Date();
+  const expire = new Date(u.expire);
+
+  if (today > expire) return res.send("expired");
+
+  res.send("success");
 });
 
-// API
-app.get("/api", (req, res) => {
-  const user = req.query.user || "";
-  const pass = req.query.pass || "";
-
-  const sql = "SELECT * FROM users WHERE username=? AND password=?";
-
-  db.query(sql, [user, pass], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.send("db_error");
-    }
-
-    if (result.length > 0) {
-      const row = result[0];
-
-      if (row.status !== "active") {
-        return res.send("banned");
-      }
-
-      if (new Date(row.expiry_date) < new Date()) {
-        return res.send("expired");
-      }
-
-      return res.send("success");
-    } else {
-      return res.send("invalid");
-    }
-  });
-});
-
-// 🔥 أهم سطر
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running");
 });
